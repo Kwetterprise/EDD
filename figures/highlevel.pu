@@ -1,0 +1,49 @@
+@startuml "highlevel"
+
+
+
+@enduml
+
+
+@startuml "Context"
+
+actor User
+
+component Website
+
+User --> Website
+
+component "Kwetter System" as k
+
+Website --> k
+
+component "Email System" as e
+
+k -> e
+User <.. e
+
+@enduml
+
+@startuml "Container"
+
+component "Website" as Website
+
+component "Api Gateway" as mlb
+Website --> mlb
+
+package Microservices {
+    component AccountService
+    component TweetService
+    component NotificationService
+}
+
+mlb --> NotificationService
+mlb --> TweetService
+mlb --> AccountService
+
+database "Event Bus" as EventBus
+
+TweetService <..> EventBus
+NotificationService <..> EventBus
+
+@enduml
