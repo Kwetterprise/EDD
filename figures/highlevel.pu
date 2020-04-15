@@ -1,49 +1,48 @@
 @startuml "highlevel"
-
-
-
-@enduml
-
-
-@startuml "Context"
-
-actor User
-
-component Website
-
-User --> Website
-
-component "Kwetter System" as k
-
-Website --> k
-
-component "Email System" as e
-
-k -> e
-User <.. e
-
-@enduml
-
-@startuml "Container"
-
-component "Website" as Website
+actor "Website" as Website
 
 component "Api Gateway" as mlb
-Website --> mlb
+Website -left-> mlb
 
-package Microservices {
-    component AccountService
+node Microservices {
     component TweetService
-    component NotificationService
+    component ActionService
+    component AccountService
+    component AuthenticationService
 }
 
-mlb --> NotificationService
-mlb --> TweetService
-mlb --> AccountService
+cloud "Event Bus" as EventBus
 
-database "Event Bus" as EventBus
+mlb <--> AuthenticationService
+mlb <--> ActionService
+mlb <--> TweetService
+mlb <--> AccountService
 
+AuthenticationService <..> EventBus
+ActionService <..> EventBus
 TweetService <..> EventBus
-NotificationService <..> EventBus
+AccountService <..> EventBus
+
+@enduml
+
+@startuml "service"
+
+component api as "API Gateway"
+cloud event as "Event Bus"
+
+component Service as service {
+    component Command
+    component Query
+}
+
+database "Current State" as state
+
+api --> Query : "Get state"
+api --> Command : "Perform action"
+
+Command ..> event : TweetPostedEvent
+Query <.. event : Process
+
+Query <--> state : Update/fetch current state
 
 @enduml
