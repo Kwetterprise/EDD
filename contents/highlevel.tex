@@ -9,6 +9,8 @@ This architecture consists of four main parts:
 \begin{teitemize}
     \item \textbf{Microservices}\\
     The business logic of Kwetterprise is handled by multiple microservices. Microservices are chosen to seperate responsibilies and functionality.
+    \item \textbf{Service discovery server}\\
+    The service discovery server exists to let microservices register themselves.
     \item \textbf{API gateway}\\
     The API gateway is used to dyamically route requests from the front-end (or other API users) to the correct micro-service.
     \item \textbf{Event bus}\\
@@ -19,12 +21,14 @@ This architecture consists of four main parts:
 Services are designed with the ``command–query responsibility segregation'' principle (CQRS) in mind. \cref{fig:highlevel-service} shows this archtecture.
 
 \begin{tefigure}[h][centering]
-    \teincludegraphics[width=.6\textwidth]{fig:highlevel-service}{High level design of a service.}{figures/service}
+    \teincludegraphics[width=.8\textwidth]{fig:highlevel-service}{High level design of a service.}{figures/service}
 \end{tefigure}
 
-The service consists of two parts. The \textit{Command} part handles commands which are invoked by an actor such as tweeting or following a user. These commands result in events being published to the event bus.
+The service consists of three parts. The \textit{Command} part handles commands which are invoked by an actor such as tweeting or following a user. These commands result in events being published to the event bus.
 
-The \textit{Query} part of the service is responsible for presenting this data to other components. It processes the events created by the \textit{Command} component and keeps a database with the current state. This database functions as a ``cache'' for query requests like retrieving a user's tweets or followers.
+The \textit{Processor} part processes events and updates a database with the ``current state''. E.g.\ whenever a tweet even comes in, the tweet is added to the database. Then, whenever an event communicates a tweet is removed, the tweet is deleted from the database. 
+
+The \textit{Query} part of the service is responsible for presenting this data to other components.
 
 \FloatBarrier%
 The reason this cache exists is because otherwise a ``retrieve all followers from this user'' request must fetch all events relating to that user (following, unfollowing, account deletion, etc) and process them to determine the final result. This would put high load on the service the moment a query is executed instead of balancing the load whenever updates are pushed.

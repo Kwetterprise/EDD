@@ -1,8 +1,10 @@
 @startuml "highlevel"
 actor "Website" as Website
 
-component "Api Gateway" as mlb
-Website -left-> mlb
+component "Api Gateway" as api
+component "Service Discovery" as sd
+Website -left-> api
+api -left-> sd
 
 node Microservices {
     component TweetService
@@ -13,36 +15,38 @@ node Microservices {
 
 cloud "Event Bus" as EventBus
 
-mlb <--> AuthenticationService
-mlb <--> ActionService
-mlb <--> TweetService
-mlb <--> AccountService
+api <-- Microservices
+sd <--> Microservices
 
-AuthenticationService <..> EventBus
-ActionService <..> EventBus
-TweetService <..> EventBus
-AccountService <..> EventBus
+Microservices --> EventBus
 
 @enduml
 
 @startuml "service"
 
 component api as "API Gateway"
+component sd as "Service Discovery"
 cloud event as "Event Bus"
 
 component Service as service {
     component Command
     component Query
+    component Processor as "Event Processor"
+    component "Service Discovery NuGet Library" as sdl
+    database "Current State" as state
 }
 
-database "Current State" as state
 
 api --> Query : "Get state"
 api --> Command : "Perform action"
 
 Command ..> event : TweetPostedEvent
-Query <.. event : Process
+Processor <.. event : Process event
 
-Query <--> state : Update/fetch current state
+Processor <--> state : Update current state
+
+Query <--> state : Get current state
+
+sdl <-up-> sd : Register & keep alive
 
 @enduml
